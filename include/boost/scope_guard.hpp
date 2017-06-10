@@ -85,7 +85,7 @@ public:
     ~scope_guard()
     noexcept(noexcept(std::declval<scope_guard>().invoke()) &&
              std::is_nothrow_destructible_v<base_type>)
-    { this->invoke(); }
+    { base_type::invoke(); }
 };
 
 template <typename Fn, typename... Args>
