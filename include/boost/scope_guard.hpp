@@ -23,32 +23,73 @@ namespace boost {
 ///////////////////////////////////////////////////////////////////////////////
 
 namespace detail::scope_guard {
-    template <typename T>
-    struct unwrap
-    { using type = T; };
-
-    template <typename T>
-    struct unwrap<std::reference_wrapper<T>>
-    { using type = T&; };
-
-    template <typename T>
-    using unwrap_decay_t = typename unwrap<std::decay_t<T>>::type;
+    template <typename Fn, typename Args, std::size_t... I>
+    auto apply_impl(Fn&& fn, Args&& args, std::index_sequence<I...>)
+    noexcept(noexcept(std::invoke(
+        std::forward<Fn>(fn), std::get<I>(std::forward<Args>(args))...)))
+    -> decltype(      std::invoke(
+        std::forward<Fn>(fn), std::get<I>(std::forward<Args>(args))...))
+    { return          std::invoke(
+        std::forward<Fn>(fn), std::get<I>(std::forward<Args>(args))...); }
+     
+    // Like `std::apply` but SFINAE friendly and propagates `noexcept`ness.
+    template <class Fn, typename Args>
+    auto apply(Fn&& fn, Args&& args)
+    noexcept(noexcept(apply_impl(
+        std::forward<Fn>(fn), std::forward<Args>(args),
+        std::make_index_sequence<std::tuple_size_v<std::decay_t<Args>>>())))
+    -> decltype(      apply_impl(
+        std::forward<Fn>(fn), std::forward<Args>(args),
+        std::make_index_sequence<std::tuple_size_v<std::decay_t<Args>>>()))
+    { return          apply_impl(
+        std::forward<Fn>(fn), std::forward<Args>(args),
+        std::make_index_sequence<std::tuple_size_v<std::decay_t<Args>>>()); }
 
     template <typename Fn, typename... Args>
-    struct base
+    class callback
     {
-        static_assert(std::is_invocable_v<
-            unwrap_decay_t<Fn>, unwrap_decay_t<Args>...>);
+        Fn fn;
+        std::tuple<Args...> args;
 
-        base(Fn&& fn, Args&&... args)
-        noexcept(std::is_nothrow_constructible_v<unwrap_decay_t<Fn>, Fn> &&
-                (std::is_nothrow_constructible_v<unwrap_decay_t<Args>, Args> &&
-                 ...))
-        : fn(std::forward<Fn>(fn))
-        , args(std::forward<Args>(args)...)
+    public:
+        template <typename Fn_, typename... Args_, std::enable_if_t<
+            (std::is_constructible_v<Fn, Fn_> && ... &&
+             std::is_constructible_v<Args, Args_>)>*...>
+        explicit callback(Fn_&& fn, Args_&&... args)
+        noexcept((std::is_nothrow_constructible_v<Fn, Fn_> && ... &&
+                  std::is_nothrow_constructible_v<Args, Args_>))
+        : fn(std::forward<Fn_>(fn))
+        , args(std::forward<Args_>(args)...)
         {}
 
-        base() = delete;
+        template <typename Fn_ = Fn>
+        auto operator()()
+        noexcept(noexcept((void)scope_guard::apply(
+            std::forward<Fn_>(fn), std::move(args))))
+        -> decltype(      (void)scope_guard::apply(
+            std::forward<Fn_>(fn), std::move(args)))
+        { return          (void)scope_guard::apply(
+            std::forward<Fn_>(fn), std::move(args)); }
+    };
+
+    template <typename... Params>
+    class base
+    {
+    protected:
+        using callback_type = detail::scope_guard::callback<Params...>;
+
+        callback_type callback;
+
+    public:
+        static_assert(std::is_invocable_v<callback_type>,
+            "callback not invocable");
+
+        template <typename... Params_, std::enable_if_t<
+            std::is_constructible_v<callback_type, Params...>>*...>
+        explicit base(Params_&&... params)
+        noexcept(std::is_nothrow_constructible_v<callback_type, Params...>)
+        : callback(std::forward<Params_>(params)...)
+        {}
 
         base(base const&) = delete;
         auto operator=(base const&)
@@ -59,90 +100,89 @@ namespace detail::scope_guard {
         auto operator=(base&&)
         -> base&
         = delete;
-
-    protected:
-        void invoke()
-        noexcept(noexcept(std::invoke(
-            std::declval<unwrap_decay_t<Fn>>(),
-            std::declval<unwrap_decay_t<Args>>()...)))
-        { std::apply(std::forward<unwrap_decay_t<Fn>>(fn), std::move(args)); }
-
-    private:
-        unwrap_decay_t<Fn> fn;
-        std::tuple<unwrap_decay_t<Args>...> args;
     };
+
+    template <typename T>
+    struct unwrap
+    { using type = T; };
+
+    template <typename T>
+    struct unwrap<std::reference_wrapper<T>>
+    { using type = T&; };
+
+    template <typename T>
+    using unwrap_decay_t = typename unwrap<std::decay_t<T>>::type;
 } // detail::scope_guard
 
-template <typename Fn, typename... Args>
-class scope_guard final
-: detail::scope_guard::base<Fn, Args...>
+template <typename... Params>
+struct scope_guard
+: detail::scope_guard::base<Params...>
 {
-    using base_type = detail::scope_guard::base<Fn, Args...>;
+    using base_type = detail::scope_guard::base<Params...>;
+    using this_type = scope_guard;
 
 public:
     using base_type::base_type;
 
     ~scope_guard()
-    noexcept(noexcept(std::declval<scope_guard>().invoke()) &&
+    noexcept(noexcept(this_type::callback()) &&
              std::is_nothrow_destructible_v<base_type>)
-    { base_type::invoke(); }
+    { this_type::callback(); }
 };
 
-template <typename Fn, typename... Args>
-scope_guard(Fn&&, Args&&...)
--> scope_guard<Fn, Args...>;
+template <typename... Params>
+scope_guard(Params&&...)
+-> scope_guard<detail::scope_guard::unwrap_decay_t<Params>...>;
 
-
-template <typename Fn, typename... Args>
-class scope_guard_failure final
-: detail::scope_guard::base<Fn, Args...>
+template <typename... Params>
+struct scope_guard_failure
+: detail::scope_guard::base<Params...>
 {
-    using base_type = detail::scope_guard::base<Fn, Args...>;
+    using base_type = detail::scope_guard::base<Params...>;
+    using this_type = scope_guard_failure;
+
+    int in = std::uncaught_exceptions();
 
 public:
-    using base_type::base_type;
+    using detail::scope_guard::base<Params...>::base;
 
     ~scope_guard_failure()
-    noexcept(noexcept(std::declval<scope_guard_failure>().invoke()) &&
+    noexcept(noexcept(this_type::callback()) &&
              std::is_nothrow_destructible_v<base_type>)
     {
-        int const out = std::uncaught_exceptions();
-        if (BOOST_UNLIKELY(out > in)) { base_type::invoke(); }
+        int out = std::uncaught_exceptions();
+        if (BOOST_UNLIKELY(out > in)) { this_type::callback(); }
     }
-
-private:
-    int const in = std::uncaught_exceptions();
 };
 
-template <typename Fn, typename... Args>
-scope_guard_failure(Fn&&, Args&&...)
--> scope_guard_failure<Fn, Args...>;
+template <typename... Params>
+scope_guard_failure(Params&&...)
+-> scope_guard_failure<detail::scope_guard::unwrap_decay_t<Params>...>;
 
-
-template <typename Fn, typename... Args>
-class scope_guard_success final
-: detail::scope_guard::base<Fn, Args...>
+template <typename... Params>
+struct scope_guard_success
+: detail::scope_guard::base<Params...>
 {
-    using base_type = detail::scope_guard::base<Fn, Args...>;
+    using base_type = detail::scope_guard::base<Params...>;
+    using this_type = scope_guard_success;
+
+    int in = std::uncaught_exceptions();
 
 public:
-    using base_type::base_type;
+    using detail::scope_guard::base<Params...>::base;
 
     ~scope_guard_success()
-    noexcept(noexcept(std::declval<scope_guard_success>().invoke()) &&
+    noexcept(noexcept(this_type::callback()) &&
              std::is_nothrow_destructible_v<base_type>)
     {
-        int const out = std::uncaught_exceptions();
-        if (BOOST_LIKELY(out == in)) { base_type::invoke(); }
+        int out = std::uncaught_exceptions();
+        if (BOOST_LIKELY(out == in)) { this_type::callback(); }
     }
-
-private:
-    int const in = std::uncaught_exceptions();
 };
 
-template <typename Fn, typename... Args>
-scope_guard_success(Fn&&, Args&&...)
--> scope_guard_success<Fn, Args...>;
+template <typename... Params>
+scope_guard_success(Params&&...)
+-> scope_guard_success<detail::scope_guard::unwrap_decay_t<Params>...>;
 
 ///////////////////////////////////////////////////////////////////////////////
 } // boost
