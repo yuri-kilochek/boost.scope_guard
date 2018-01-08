@@ -27,7 +27,7 @@ boost::scope_guard my_guard = [&]{
     std::fclose(f);
 };
 
-// ...some code than can potentially throw exceptions...
+// ...some code that can potentially throw exceptions...
 ```
 
 A scope guard can also accept any number of additional arguments that will be
@@ -141,7 +141,7 @@ destructor.
 
 where `some_name` is an unspecified unique identifier.
 
-###### <a name="ApiReference.MacroLimitations"></a>
+###### <a name="ApiReference.MacroLimitations">Limitations</a>
 
 Generation of truly unique identifiers in all situations in a purely 
 standard manner is not currently possible. The current pure standard
@@ -153,7 +153,7 @@ When used at namespace scope, it is possible that two scope guards appear in
 the same namespace on the same lines of their corresponsing source files, which
 will generate identical names.
 
-On compilers that support it `__COUNTER__` macro is used instead
+On compilers that support it, `__COUNTER__` macro is used instead
 ([GCC][C++.Counter.GCC], [Clang][C++.Counter.CLANG] and
 [MSVC][C++.Counter.MSVC] for example, all do). On such compilers these macros
 can be used inside other macros safely (at namespace scope collisions are
