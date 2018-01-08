@@ -47,7 +47,6 @@ public:
     using detail::scope_guard::base<Params...>::base;
 
     ~scope_guard_failure()
-    noexcept(false)
     {
         int out = std::uncaught_exceptions();
         if (BOOST_UNLIKELY(out > in)) { this->action_(); }
