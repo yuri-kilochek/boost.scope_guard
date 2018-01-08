@@ -29,6 +29,7 @@ struct scope_guard
     using detail::scope_guard::base<Params...>::base;
 
     ~scope_guard()
+    noexcept(noexcept(this->action_()))
     { this->action_(); }
 };
 
@@ -47,6 +48,7 @@ public:
     using detail::scope_guard::base<Params...>::base;
 
     ~scope_guard_failure()
+    noexcept(noexcept(this->action_()))
     {
         int out = std::uncaught_exceptions();
         if (BOOST_UNLIKELY(out > in)) { this->action_(); }
@@ -68,7 +70,7 @@ public:
     using detail::scope_guard::base<Params...>::base;
 
     ~scope_guard_success()
-    noexcept(false)
+    noexcept(noexcept(this->action_()))
     {
         int out = std::uncaught_exceptions();
         if (BOOST_LIKELY(out == in)) { this->action_(); }
@@ -83,13 +85,13 @@ scope_guard_success(Params&&...)
 } // boost
 
 #define BOOST_SCOPE_GUARD \
-    ::boost::scope_guard BOOST_DETAIL_SCOPE_GUARD_UNIQUE_NAME
+    ::boost::scope_guard BOOST_DETAIL_SCOPE_GUARD_UNIQUE_NAME =
 
 #define BOOST_SCOPE_GUARD_FAILURE \
-    ::boost::scope_guard_failure BOOST_DETAIL_SCOPE_GUARD_UNIQUE_NAME
+    ::boost::scope_guard_failure BOOST_DETAIL_SCOPE_GUARD_UNIQUE_NAME =
 
 #define BOOST_SCOPE_GUARD_SUCCESS \
-    ::boost::scope_guard_success BOOST_DETAIL_SCOPE_GUARD_UNIQUE_NAME
+    ::boost::scope_guard_success BOOST_DETAIL_SCOPE_GUARD_UNIQUE_NAME =
 
 #endif
 

@@ -37,6 +37,8 @@ public:
     auto operator()()
     BOOST_DETAIL_SCOPE_GUARD_FN_ALIAS(
         (void)detail::scope_guard::apply(std::move(fn_), std::move(args_)))
+
+    ~action() noexcept = default;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
