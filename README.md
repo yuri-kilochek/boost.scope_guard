@@ -40,9 +40,8 @@ boost::scope_guard my_guard{std::fclose, f};
 
 Having to name all your scope guard objects so that they don't conflict with
 each other quickly gets tiresome, so there is a
-[`BOOST_SCOPE_GUARD`](#ApiReference.ScopeGuard.Macro) macro that does this
-automatically (however be aware of its
-[limitations](#ApiReference.MacroLimitations)):
+[`BOOST_SCOPE_GUARD`](#ApiReference.Macros) macro that does this automatically
+(however be aware of its [limitations](#ApiReference.MacroLimitations)):
 
 ```C++
 BOOST_SCOPE_GUARD {std::fclose, f};
@@ -61,7 +60,9 @@ invokes its function object _only_ when it is being destroyed due to
 [stack unwinding][C++.StackUnwinding] (i.e. when an exception is thrown) and
 ([`boost::scope_guard_success`](#ApiReference.ScopeGuardSuccess)) that invokes
 its function object _only_ when it is being destroyed due to flow of control
-leaving the scope normally.
+leaving the scope normally. These naturally have correspoinding
+[`BOOST_SCOPE_GUARD_FAILURE`](#ApiReference.Macros) and
+[`BOOST_SCOPE_GUARD_SUCCESS`](#ApiReference.Macros)
 
 ## API Reference
 
@@ -102,7 +103,7 @@ Declares a scope guard object named `my_guard` that will invoke given
 2. Same as (1).
 3. Same as (1), when `arguments...` sequence is empty.
 
-when it is destroyed due to [stack unwinding][C++.StackUnwinding] (i.e. when an 
+when it is destroyed due to [stack unwinding][C++.StackUnwinding] (i.e. when an
 exception is thrown). Any exception thrown by this invocation will propagate 
 out of the guard's destructor (and cause [`std::terminate()`][C++.Terminate] to
 be called).
@@ -123,9 +124,46 @@ Declares a scope guard object named `my_guard` that will invoke given
 2. Same as (1).
 3. Same as (1), when `arguments...` sequence is empty.
 
-when it is destroyed due to flow of control leaving the scope normally. Any 
+when it is destroyed due to flow of control leaving the scope normally. Any
 exception thrown by this invocation will propagate out of the guard's
 destructor.
+
+#### <a name="ApiReference.Macros">`BOOST_SCOPE_GUARD`, `BOOST_SCOPE_GUARD_FAILURE` and `BOOST_SCOPE_GUARD_SUCCESS`</a>
+
+```C++
+#define BOOST_SCOPE_GUARD
+    ::boost::scope_guard some_name =
+#define BOOST_SCOPE_GUARD_FAILURE
+    ::boost::scope_guard_failure some_name =
+#define BOOST_SCOPE_GUARD_SUCCESS
+    ::boost::scope_guard_success some_name =
+```
+
+where `some_name` is an unspecified unique identifier.
+
+###### <a name="ApiReference.MacroLimitations"></a>
+
+Generation of truly unique identifiers in all situations in a purely 
+standard manner is not currently possible. The current pure standard
+implementation concatenates unspecified token with the value of
+[`__LINE__`][C++.Line] macro, so you wont be able to use these macros inside
+other macros, since each macro expands into a single line.
+
+When used at namespace scope, it is possible that two scope guards appear in 
+the same namespace on the same lines of their corresponsing source files, which
+will generate identical names.
+
+On compilers that support it `__COUNTER__` macro is used instead
+([GCC][C++.Counter.GCC], [Clang][C++.Counter.CLANG] and
+[MSVC][C++.Counter.MSVC] for example, all do). On such compilers these macros
+can be used inside other macros safely (at namespace scope collisions are
+still possible, if very unlikely).
+
+##### <a name="ApiReference.InvokeUnwrapDecay"><i>INVOKE_UNWRAP_DECAY</i></a>
+
+> TODO
+
+
 
 [Boost.ScopeExit]: http://www.boost.org/doc/libs/release/libs/scope_exit/doc/html/index.html
 [D]: https://dlang.org/
@@ -136,3 +174,7 @@ destructor.
 [RAII]: http://en.cppreference.com/w/cpp/language/raii
 [C++.StackUnwinding]: http://en.cppreference.com/w/cpp/language/throw#Stack_unwinding
 [C++.Terminate]: http://en.cppreference.com/w/cpp/error/terminate
+[C++.Line]: http://en.cppreference.com/w/cpp/preprocessor/replace#Predefined_macros
+[C++.Counter.GCC]: https://gcc.gnu.org/onlinedocs/cpp/Common-Predefined-Macros.html
+[C++.Counter.CLANG]: https://clang.llvm.org/docs/LanguageExtensions.html#builtin-macros
+[C++.Counter.MSVC]: https://msdn.microsoft.com/en-us/library/b0084kay.aspx
