@@ -60,7 +60,7 @@ invokes its function object _only_ when it is being destroyed due to
 [stack unwinding][C++.StackUnwinding] (i.e. when an exception is thrown) and
 ([`boost::scope_guard_success`](#ApiReference.ScopeGuardSuccess)) that invokes
 its function object _only_ when it is being destroyed due to flow of control
-leaving the scope normally. These naturally have correspoinding
+leaving the scope normally. These naturally have corresponding
 [`BOOST_SCOPE_GUARD_FAILURE`](#ApiReference.Macros) and
 [`BOOST_SCOPE_GUARD_SUCCESS`](#ApiReference.Macros)
 
