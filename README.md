@@ -153,17 +153,17 @@ where `$some_name$` is an unspecified unique identifier.
 Generation of truly unique identifiers in all situations in a purely standard
 manner is not currently possible. Right now an unspecified token is
 concatenated with the value of [`__LINE__`][C++.Line] macro, so you won't be
-able to use more than on if these macros per scope inside other macros, since
-each macro expands into a single line.
+able to use these macros inside other macros more than once per scope, since
+enclosing macro would expand into a single line, generating identical.
 
 When used at namespace scope, it is possible that two scope guards appear in 
-the same namespace on the same lines of their corresponsing source files, which
-will generate identical names.
+the same namespace on the same lines of their corresponsing source files,
+which, again, will generate identical names.
 
 On compilers that support `__COUNTER__` macro ([GCC][C++.Counter.GCC],
 [Clang][C++.Counter.CLANG] and [MSVC][C++.Counter.MSVC] for example, all do)
-its value is also appended to the generated name, aming these macros fully safe
-to use inside other macros, and reducing the chance of name collisions at
+its value is also appended to the generated name, making these macros fully
+safe to use inside other macros, and reducing the chance of name collisions at
 namespace scope.
 
 [Boost.ScopeExit]: http://www.boost.org/doc/libs/release/libs/scope_exit/doc/html/index.html
