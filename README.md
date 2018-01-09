@@ -81,17 +81,17 @@ scope normally. These naturally have corresponding
 ```C++
 template <typename Fn, typename... Args>
 constexpr
-boost::scope_guard::scope_guard(Fn&& fn. Args&&... args)
+boost::scope_guard::scope_guard(Fn&& fn, Args&&... args)
 noexcept(/* see description */);
 
 template <typename Fn, typename... Args>
 constexpr
-boost::scope_guard_failure::scope_guard_failure(Fn&& fn. Args&&... args)
+boost::scope_guard_failure::scope_guard_failure(Fn&& fn, Args&&... args)
 noexcept(/* see description */);
 
 template <typename Fn, typename... Args>
 constexpr
-boost::scope_guard_success::scope_guard_success(Fn&& fn. Args&&... args)
+boost::scope_guard_success::scope_guard_success(Fn&& fn, Args&&... args)
 noexcept(/* see description */);
 ```
 
