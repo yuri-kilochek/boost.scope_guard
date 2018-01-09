@@ -33,12 +33,12 @@ public:
     : fn_(std::forward<Fn_>(fn)), args_(std::forward<Args_>(args)...)
     {}
 
+    ~action() noexcept = default;
+
     constexpr
     auto operator()()
     BOOST_DETAIL_SCOPE_GUARD_FN_ALIAS(
         (void)detail::scope_guard::apply(std::move(fn_), std::move(args_)))
-
-    ~action() noexcept = default;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
