@@ -74,6 +74,14 @@ scope normally. These naturally have corresponding
 
 ## API Reference
 
+###### Headers
+
+Everything is accessible via
+
+```C++
+#include <boost/scope_guard.hpp>
+```
+
 #### <a name="ApiReference.Classes">`boost::scope_guard`, `boost::scope_guard_failure` and `boost::scope_guard_success`</a>
 
 ###### Constructors
