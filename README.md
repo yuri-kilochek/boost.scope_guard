@@ -5,12 +5,12 @@ via C++17's [`std::uncaught_exceptions()`][C++.UncaughtExceptions] with no
 dynamic memory allocation and terse syntax via
 [class template deduction][C++.ClassTemplateDeduction].
 
-Library meant to supersede [Boost.ScopeExit][Boost.ScopeExit].
-
-> **NOT YET PART OF BOOST**
-
 Andrei Alexandrescu explains scope guards in detail in his CppCon 2015 talk
 [_Declarative Control Flow_][YouTube.AlexandrescuTalk].
+
+This library is meant to supersede [Boost.ScopeExit][Boost.ScopeExit].
+
+> **NOT YET PART OF BOOST**
 
 ## Introduction
 
