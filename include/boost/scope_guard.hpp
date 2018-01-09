@@ -17,19 +17,23 @@
 
 #include <boost/config.hpp>
 
+#include <type_traits>
 #include <exception>
 
 namespace boost {
 ///////////////////////////////////////////////////////////////////////////////
 
 template <typename... Params>
-struct scope_guard
-: private detail::scope_guard::base<Params...>
+class scope_guard
+: detail::scope_guard::base<Params...>
 {
-    using detail::scope_guard::base<Params...>::base;
+    using base_type = detail::scope_guard::base<Params...>;
+
+public:
+    using base_type::base_type;
 
     ~scope_guard()
-    noexcept(noexcept(this->action_()))
+    noexcept(std::is_nothrow_invocable_v<typename base_type::action_type>)
     { this->action_(); }
 };
 
@@ -42,13 +46,15 @@ template <typename... Params>
 class scope_guard_failure
 : detail::scope_guard::base<Params...>
 {
+    using base_type = detail::scope_guard::base<Params...>;
+
     int in = std::uncaught_exceptions();
 
 public:
-    using detail::scope_guard::base<Params...>::base;
+    using base_type::base_type;
 
     ~scope_guard_failure()
-    noexcept(noexcept(this->action_()))
+    noexcept(std::is_nothrow_invocable_v<typename base_type::action_type>)
     {
         int out = std::uncaught_exceptions();
         if (BOOST_UNLIKELY(out > in)) { this->action_(); }
@@ -64,13 +70,15 @@ template <typename... Params>
 class scope_guard_success
 : detail::scope_guard::base<Params...>
 {
+    using base_type = detail::scope_guard::base<Params...>;
+
     int in = std::uncaught_exceptions();
 
 public:
-    using detail::scope_guard::base<Params...>::base;
+    using base_type::base_type;
 
     ~scope_guard_success()
-    noexcept(noexcept(this->action_()))
+    noexcept(std::is_nothrow_invocable_v<typename base_type::action_type>)
     {
         int out = std::uncaught_exceptions();
         if (BOOST_LIKELY(out == in)) { this->action_(); }
