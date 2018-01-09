@@ -162,7 +162,7 @@ Generation of truly unique identifiers in all situations in a purely standard
 manner is not currently possible. Right now an unspecified token is
 concatenated with the value of [`__LINE__`][C++.Line] macro, so you won't be
 able to use these macros inside other macros more than once per scope, since
-enclosing macro would expand into a single line, generating identical.
+enclosing macro would expand into a single line, generating identical names.
 
 When used at namespace scope, it is possible that two scope guards appear in 
 the same namespace on the same lines of their corresponding source files,
