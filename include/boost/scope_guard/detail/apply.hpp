@@ -9,6 +9,7 @@
 
 #include <boost/scope_guard/detail/fn_alias.hpp>
 
+#include <cstddef>
 #include <utility>
 #include <functional>
 #include <tuple>
