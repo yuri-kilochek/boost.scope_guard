@@ -38,7 +38,8 @@ public:
     constexpr
     auto operator()()
     BOOST_DETAIL_SCOPE_GUARD_FN_ALIAS(
-        (void)detail::scope_guard::apply(std::move(fn_), std::move(args_)))
+        (void)detail::scope_guard::apply(
+            std::forward<Fn>(fn_), std::move(args_)))
 };
 
 ///////////////////////////////////////////////////////////////////////////////

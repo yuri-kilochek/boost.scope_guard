@@ -25,7 +25,8 @@ protected:
 
 public:
     template <typename... Params_,
-        std::enable_if_t<std::is_constructible_v<action_type, Params_...>>*...>
+        std::enable_if_t<std::is_constructible_v<action_type, Params_...> &&
+                         std::is_invocable_v<action_type>>*...>
     constexpr
     base(Params_&&... params)
     noexcept(std::is_nothrow_constructible_v<action_type, Params_...>)
