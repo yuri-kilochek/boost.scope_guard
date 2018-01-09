@@ -108,15 +108,15 @@ forwarded `fn` and `args...` respectively is `noexcept`.
 ```C++
 // (1)
 boost::scope_guard::~scope_guard()
-noexcept(/ *see description */);
+noexcept(/* see description */);
 
 // (2)
 boost::scope_guard_failure::~scope_guard_failure()
-noexcept(/ *see description */);
+noexcept(/* see description */);
 
 // (3)
 boost::scope_guard_success::~scope_guard_success()
-noexcept(/ *see description */);
+noexcept(/* see description */);
 ```
 
 Forwards and invokes stored cleanup function with its forwarded stored
