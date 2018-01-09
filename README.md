@@ -32,7 +32,7 @@ boost::scope_guard my_guard = [&]{
 
 A scope guard can also accept any number of additional arguments that will be
 passed to its function upon invocation. This means you can often use 
-cleanup functions directy, without wrapping them in lambdas:
+cleanup functions directly, without wrapping them in lambdas:
 
 ```C++
 boost::scope_guard my_guard{std::fclose, f};
@@ -157,7 +157,7 @@ able to use these macros inside other macros more than once per scope, since
 enclosing macro would expand into a single line, generating identical.
 
 When used at namespace scope, it is possible that two scope guards appear in 
-the same namespace on the same lines of their corresponsing source files,
+the same namespace on the same lines of their corresponding source files,
 which, again, will generate identical names.
 
 On compilers that support `__COUNTER__` macro ([GCC][C++.Counter.GCC],
