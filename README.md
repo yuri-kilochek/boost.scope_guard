@@ -15,7 +15,7 @@ This library is meant to supersede [Boost.ScopeExit][Boost.ScopeExit].
 ## Introduction
 
 Given a resource that lacks built-in [RAII][RAII] capability, e.g. a C-style 
-`FILE*`, [`boost::scope_guard`](#ApiReference.ScopeGuard) lets you manage its
+`FILE*`, [`boost::scope_guard`](#ApiReference.Classes) lets you manage its
 lifetime in an exception-safe and localized manner:
 
 ```C++
@@ -31,11 +31,19 @@ boost::scope_guard my_guard = [&]{
 ```
 
 A scope guard can also accept any number of additional arguments that will be
-passed to its function object upon invocation. This means you can often use 
+passed to its function upon invocation. This means you can often use 
 cleanup functions directy, without wrapping them in lambdas:
 
 ```C++
 boost::scope_guard my_guard{std::fclose, f};
+```
+
+Function and arguments are stored by value by default, you can store them by
+reference via [`std::ref`][C++.Ref] and [`std::cref`][C++.Ref]:
+
+```C++
+std::thread my_thread(compute_something);
+boost::scope_guard my_guard{&std::thread::join, std::ref(my_thread)};
 ```
 
 Having to name all your scope guard objects so that they don't conflict with
@@ -50,120 +58,113 @@ BOOST_SCOPE_GUARD {std::fclose, f};
 Naturally, lambdas are supported as well:
 
 ```C++
-BOOST_SCOPE_GUARD [&]{ std::fclose(f); };
+BOOST_SCOPE_GUARD [&]{ my_thread.join(); };
 ```
 
-Regular [`boost::scope_guard`](#ApiReference.ScopeGuard) always
-invokes its function object upon destruction, which may not be desirable. There
-is also [`boost::scope_guard_failure`](#ApiReference.ScopeGuardFailure) that
-invokes its function object _only_ when it is being destroyed due to 
+Regular [`boost::scope_guard`](#ApiReference.Classes) always invokes its
+stored function upon destruction, which may not be desirable. There is also
+[`boost::scope_guard_failure`](#ApiReference.Classes) that invokes its stored
+function _only_ when it is being destroyed due to
 [stack unwinding][C++.StackUnwinding] (i.e. when an exception is thrown) and
-[`boost::scope_guard_success`](#ApiReference.ScopeGuardSuccess) that invokes
-its function object _only_ when it is being destroyed due to flow of control
-leaving the scope normally. These naturally have corresponding
+[`boost::scope_guard_success`](#ApiReference.Classes) that invokes its stored
+function _only_ when it is being destroyed due to flow of control leaving the
+scope normally. These naturally have corresponding
 [`BOOST_SCOPE_GUARD_FAILURE`](#ApiReference.Macros) and
 [`BOOST_SCOPE_GUARD_SUCCESS`](#ApiReference.Macros)
 
 ## API Reference
 
-#### <a name="ApiReference.ScopeGuard">`boost::scope_guard`</a>
+#### <a name="ApiReference.Classes">`boost::scope_guard`, `boost::scope_guard_failure` and `boost::scope_guard_success`</a>
+
+###### Constructors
 
 ```C++
-boost::scope_guard my_guard{function_object, arguments...};     // (1)
-boost::scope_guard my_guard = {function_object, arguments...};  // (2)
-boost::scope_guard my_guard = function_object;                  // (3)
+template <typename Fn, typename... Args>
+constexpr
+boost::scope_guard::scope_guard(Fn&& fn. Args&&... args)
+noexcept(/* see description */);
+
+template <typename Fn, typename... Args>
+constexpr
+boost::scope_guard_failure::scope_guard_failure(Fn&& fn. Args&&... args)
+noexcept(/* see description */);
+
+template <typename Fn, typename... Args>
+constexpr
+boost::scope_guard_success::scope_guard_success(Fn&& fn. Args&&... args)
+noexcept(/* see description */);
 ```
 
-Declares a scope guard object named `my_guard` that will invoke given
-`function_object` with `arguments...` (if any) as if via
+Stores cleanup function `fn` and its arguments `args...` after
+[decaying][C++.Decay] them and unwrapping
+[`std::reference_wrapper`s][C++.ReferenceWrapper] (the same way
+[`std::make_tuple`][C++.MakeTuple] does). Is defined iff stored cleanup
+function is [`Callable`][C++.Callable] with its stored arguments. Is `noexcept`
+iff initialization of stored cleanup function and its stored arguments with
+forwarded `fn` and `args...` respectively is `noexcept`.
 
-1. <i>[INVOKE_UNWRAP_DECAY](#ApiReference.InvokeUnwrapDecay)(function_object,
-    arguments...)</i>
-2. Same as (1).
-3. Same as (1), when `arguments...` sequence is empty.
-
-when it is destroyed. Any exception thrown by this invocation will propagate 
-out of the guard's destructor (and cause [`std::terminate()`][C++.Terminate] to
-be called if the guard is being destroyed due to
-[stack unwinding][C++.StackUnwinding]).
-
-#### <a name="ApiReference.ScopeGuardFailure">`boost::scope_guard_failure`</a>
+###### Destructors
 
 ```C++
-boost::scope_guard_failure my_guard{function_object, arguments...};     // (1)
-boost::scope_guard_failure my_guard = {function_object, arguments...};  // (2)
-boost::scope_guard_failure my_guard = function_object;                  // (3)
+// (1)
+boost::scope_guard::~scope_guard()
+noexcept(/ *see description */);
+
+// (2)
+boost::scope_guard_failure::~scope_guard_failure()
+noexcept(/ *see description */);
+
+// (3)
+boost::scope_guard_success::~scope_guard_success()
+noexcept(/ *see description */);
 ```
 
-Declares a scope guard object named `my_guard` that will invoke given
-`function_object` with `arguments...` (if any) as if via
+Forwards and invokes stored cleanup function with its forwarded stored
+arguments,
 
-1. <i>[INVOKE_UNWRAP_DECAY](#ApiReference.InvokeUnwrapDecay)(function_object,
-    arguments...)</i>
-2. Same as (1).
-3. Same as (1), when `arguments...` sequence is empty.
+1. Always.
+2. Iff the destructor was called due to [stack unwinding][C++.StackUnwinding]
+    (i.e. when an exception is thrown).
+3. Iff the destructor was called due to flow of control leaving the scope
+    normally.
 
-when it is destroyed due to [stack unwinding][C++.StackUnwinding] (i.e. when an
-exception is thrown). Any exception thrown by this invocation will propagate 
-out of the guard's destructor (and cause [`std::terminate()`][C++.Terminate] to
-be called).
-
-#### <a name="ApiReference.ScopeGuardSuccess">`boost::scope_guard_success`</a>
-
-```C++
-boost::scope_guard_success my_guard{function_object, arguments...};     // (1)
-boost::scope_guard_success my_guard = {function_object, arguments...};  // (2)
-boost::scope_guard_success my_guard = function_object;                  // (3)
-```
-
-Declares a scope guard object named `my_guard` that will invoke given
-`function_object` with `arguments...` (if any) as if via
-
-1. <i>[INVOKE_UNWRAP_DECAY](#ApiReference.InvokeUnwrapDecay)(function_object,
-    arguments...)</i>
-2. Same as (1).
-3. Same as (1), when `arguments...` sequence is empty.
-
-when it is destroyed due to flow of control leaving the scope normally. Any
-exception thrown by this invocation will propagate out of the guard's
-destructor.
+Any exception thrown by the invocation of stored cleanup function will
+propagate out of the destructor (and cause [`std::terminate()`][C++.Terminate]
+to be called if the destructor was called due to
+[stack unwinding][C++.StackUnwinding]). Is `noexcept`
+iff invocation of forwarded stored cleanup function with its forwarded stored
+arguments is `noexcept`.
 
 #### <a name="ApiReference.Macros">`BOOST_SCOPE_GUARD`, `BOOST_SCOPE_GUARD_FAILURE` and `BOOST_SCOPE_GUARD_SUCCESS`</a>
 
 ```C++
 #define BOOST_SCOPE_GUARD
-    ::boost::scope_guard some_name =
+    ::boost::scope_guard $some_name$ =
 #define BOOST_SCOPE_GUARD_FAILURE
-    ::boost::scope_guard_failure some_name =
+    ::boost::scope_guard_failure $some_name$ =
 #define BOOST_SCOPE_GUARD_SUCCESS
-    ::boost::scope_guard_success some_name =
+    ::boost::scope_guard_success $some_name$ =
 ```
 
-where `some_name` is an unspecified unique identifier.
+where `$some_name$` is an unspecified unique identifier.
 
 ###### <a name="ApiReference.MacroLimitations">Limitations</a>
 
-Generation of truly unique identifiers in all situations in a purely 
-standard manner is not currently possible. The current pure standard
-implementation concatenates unspecified token with the value of
-[`__LINE__`][C++.Line] macro, so you wont be able to use these macros inside
-other macros, since each macro expands into a single line.
+Generation of truly unique identifiers in all situations in a purely standard
+manner is not currently possible. Right now an unspecified token is
+concatenated with the value of [`__LINE__`][C++.Line] macro, so you won't be
+able to use more than on if these macros per scope inside other macros, since
+each macro expands into a single line.
 
 When used at namespace scope, it is possible that two scope guards appear in 
 the same namespace on the same lines of their corresponsing source files, which
 will generate identical names.
 
-On compilers that support it, `__COUNTER__` macro is used instead
-([GCC][C++.Counter.GCC], [Clang][C++.Counter.CLANG] and
-[MSVC][C++.Counter.MSVC] for example, all do). On such compilers these macros
-can be used inside other macros safely (at namespace scope collisions are
-still possible, if very unlikely).
-
-##### <a name="ApiReference.InvokeUnwrapDecay"><i>INVOKE_UNWRAP_DECAY</i></a>
-
-> TODO
-
-
+On compilers that support `__COUNTER__` macro ([GCC][C++.Counter.GCC],
+[Clang][C++.Counter.CLANG] and [MSVC][C++.Counter.MSVC] for example, all do)
+its value is also appended to the generated name, aming these macros fully safe
+to use inside other macros, and reducing the chance of name collisions at
+namespace scope.
 
 [Boost.ScopeExit]: http://www.boost.org/doc/libs/release/libs/scope_exit/doc/html/index.html
 [D]: https://dlang.org/
@@ -172,7 +173,12 @@ still possible, if very unlikely).
 [C++.ClassTemplateDeduction]: http://en.cppreference.com/w/cpp/language/class_template_deduction
 [YouTube.AlexandrescuTalk]: https://youtu.be/WjTrfoiB0MQ
 [RAII]: http://en.cppreference.com/w/cpp/language/raii
+[C++.Ref]: http://en.cppreference.com/w/cpp/utility/functional/ref
 [C++.StackUnwinding]: http://en.cppreference.com/w/cpp/language/throw#Stack_unwinding
+[C++.Decay]: http://en.cppreference.com/w/cpp/types/decay
+[C++.ReferenceWrapper]: http://en.cppreference.com/w/cpp/utility/functional/reference_wrapper
+[C++.MakeTuple]: http://en.cppreference.com/w/cpp/utility/tuple/make_tuple
+[C++.Callable]: http://en.cppreference.com/w/cpp/concept/Callable
 [C++.Terminate]: http://en.cppreference.com/w/cpp/error/terminate
 [C++.Line]: http://en.cppreference.com/w/cpp/preprocessor/replace#Predefined_macros
 [C++.Counter.GCC]: https://gcc.gnu.org/onlinedocs/cpp/Common-Predefined-Macros.html
