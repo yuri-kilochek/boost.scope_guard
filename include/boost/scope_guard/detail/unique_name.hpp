@@ -13,10 +13,16 @@
 
 #if __COUNTER__ != __COUNTER__
     #define BOOST_DETAIL_SCOPE_GUARD_UNIQUE_NAME \
-        BOOST_JOIN(boost_scope_guard_, __COUNTER__)
+        BOOST_JOIN(boost_detail_scope_guard,     \
+        BOOST_JOIN(_                       ,     \
+        BOOST_JOIN(__LINE__                ,     \
+        BOOST_JOIN(_                       ,     \
+                   __COUNTER__             ))))
 #else
     #define BOOST_DETAIL_SCOPE_GUARD_UNIQUE_NAME \
-        BOOST_JOIN(boost_scope_guard_on_line_, __LINE__)
+        BOOST_JOIN(boost_detail_scope_guard,     \
+        BOOST_JOIN(_                       ,     \
+                   __LINE__                ))
 #endif
 
 ///////////////////////////////////////////////////////////////////////////////
