@@ -161,20 +161,15 @@ where `$some_name$` is an unspecified unique identifier.
 ###### <a name="ApiReference.MacroLimitations">Limitations</a>
 
 Generation of truly unique identifiers in all situations in a purely standard
-manner is not currently possible. Right now an unspecified token is
-concatenated with the value of [`__LINE__`][C++.Line] macro, so you won't be
-able to use these macros inside other macros more than once per scope, since
-enclosing macro would expand into a single line, generating identical names.
+manner and safe manner is not currently possible. Right now an unspecified
+token is concatenated with the value of [`__LINE__`][C++.Line] macro, so you
+won't be able to use these macros inside other macros more than once per scope,
+since enclosing macro would expand into a single line, generating identical
+names.
 
 When used at namespace scope, it is possible that two scope guards appear in 
 the same namespace on the same lines of their corresponding source files,
-which, again, will generate identical names.
-
-On compilers that support `__COUNTER__` macro ([GCC][C++.Counter.GCC],
-[Clang][C++.Counter.CLANG] and [MSVC][C++.Counter.MSVC] for example, all do)
-its value is also appended to the generated name, making these macros fully
-safe to use inside other macros, and reducing the chance of name collisions at
-namespace scope.
+which, too, will generate identical names.
 
 [Boost.ScopeExit]: http://www.boost.org/doc/libs/release/libs/scope_exit/doc/html/index.html
 [D]: https://dlang.org/
@@ -191,6 +186,3 @@ namespace scope.
 [C++.Callable]: http://en.cppreference.com/w/cpp/concept/Callable
 [C++.Terminate]: http://en.cppreference.com/w/cpp/error/terminate
 [C++.Line]: http://en.cppreference.com/w/cpp/preprocessor/replace#Predefined_macros
-[C++.Counter.GCC]: https://gcc.gnu.org/onlinedocs/cpp/Common-Predefined-Macros.html
-[C++.Counter.CLANG]: https://clang.llvm.org/docs/LanguageExtensions.html#builtin-macros
-[C++.Counter.MSVC]: https://msdn.microsoft.com/en-us/library/b0084kay.aspx
