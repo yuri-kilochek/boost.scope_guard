@@ -19,14 +19,12 @@ namespace boost::detail::scope_guard {
 ///////////////////////////////////////////////////////////////////////////////
 
 template <std::size_t... I, typename Fn, typename Args>
-constexpr
 auto apply_impl(std::index_sequence<I...>, Fn&& fn, Args&& args)
 BOOST_DETAIL_SCOPE_GUARD_FN_ALIAS(std::invoke(
     std::forward<Fn>(fn), std::get<I>(std::forward<Args>(args))...))
  
 // Like `std::apply` but SFINAE friendly and propagates `noexcept`ness.
 template <class Fn, typename Args>
-constexpr
 auto apply(Fn&& fn, Args&& args)
 BOOST_DETAIL_SCOPE_GUARD_FN_ALIAS(apply_impl(
     std::make_index_sequence<

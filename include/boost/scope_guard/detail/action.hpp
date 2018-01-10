@@ -35,7 +35,6 @@ public:
 
     ~action() noexcept = default;
 
-    constexpr
     auto operator()()
     BOOST_DETAIL_SCOPE_GUARD_FN_ALIAS(
         (void)detail::scope_guard::apply(
