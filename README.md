@@ -62,13 +62,13 @@ BOOST_SCOPE_GUARD [&]{ my_thread.join(); };
 ```
 
 Regular [`boost::scope_guard`](#ApiReference.Classes) always invokes its
-stored function upon destruction, which may not be desirable. There is also
-[`boost::scope_guard_failure`](#ApiReference.Classes) that invokes its stored
-function _only_ when it is being destroyed due to
+stored cleanup function upon destruction, which may not be desirable. There is
+also [`boost::scope_guard_failure`](#ApiReference.Classes) that invokes its
+stored cleanup function _only_ when it is being destroyed due to
 [stack unwinding][C++.StackUnwinding] (i.e. when an exception is thrown) and
 [`boost::scope_guard_success`](#ApiReference.Classes) that invokes its stored
-function _only_ when it is being destroyed due to flow of control leaving the
-scope normally. These naturally have corresponding
+cleanup function _only_ when it is being destroyed due to flow of control
+leaving the scope normally. Naturally, there are corresponding
 [`BOOST_SCOPE_GUARD_FAILURE`](#ApiReference.Macros) and
 [`BOOST_SCOPE_GUARD_SUCCESS`](#ApiReference.Macros)
 
@@ -106,10 +106,12 @@ noexcept(/* see description */);
 Stores cleanup function `fn` and its arguments `args...` after
 [decaying][C++.Decay] them and unwrapping
 [`std::reference_wrapper`s][C++.ReferenceWrapper] (the same way
-[`std::make_tuple`][C++.MakeTuple] does). Is defined iff stored cleanup
-function is [`Callable`][C++.Callable] with its stored arguments. Is `noexcept`
-iff initialization of stored cleanup function and its stored arguments with
-forwarded `fn` and `args...` respectively is `noexcept`.
+[`std::make_tuple`][C++.MakeTuple] does). Is defined iff decayed and unwrapped
+stored cleanup function and its argments are initializable with `fn` and `args`
+respectively and stored cleanup function is [`Callable`][C++.Callable] with its
+stored arguments. Is `noexcept` iff initialization of stored cleanup function
+and its stored arguments with forwarded `fn` and `args...` respectively is
+`noexcept`.
 
 ###### Destructors
 
