@@ -160,12 +160,12 @@ where `$some_name$` is an unspecified unique identifier.
 
 ###### <a name="ApiReference.MacroLimitations">Limitations</a>
 
-Generation of truly unique identifiers in all situations in a purely standard
-manner and safe manner is not currently possible. Right now an unspecified
-token is concatenated with the value of [`__LINE__`][C++.Line] macro, so you
-won't be able to use these macros inside other macros more than once per scope,
-since enclosing macro would expand into a single line, generating identical
-names.
+As of C++17, generation of truly unique identifiers in all situations in
+standard-conforming and safe manner is not possible. Current implementation
+concatenates unspecified token with the value of [`__LINE__`][C++.Line] macro,
+so you won't be able to use these macros inside other macros more than once per
+scope, since enclosing macro would expand into a single line, generating
+identical names.
 
 When used at namespace scope, it is possible that two scope guards appear in 
 the same namespace on the same lines of their corresponding source files,
